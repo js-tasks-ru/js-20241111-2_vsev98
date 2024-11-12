@@ -7,7 +7,7 @@
 
 export function sortStrings(arr, param = "asc") {
   return Array.from(arr).sort((a, b) => {
-    let sortDirect = param === "asc" ? 1 : -1;
+    const sortDirect = param === "asc" ? 1 : -1;
 
     return (
       sortDirect * a.localeCompare(b, ["ru", "en"], { caseFirst: "upper" })

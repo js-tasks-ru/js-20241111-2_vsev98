@@ -5,5 +5,7 @@
  * @returns {object} - returns the new object
  */
 export const omit = (obj, ...fields) => {
-
+  const newObj = JSON.parse(JSON.stringify(obj));
+  fields.forEach((key) => delete newObj[key]);
+  return newObj;
 };
