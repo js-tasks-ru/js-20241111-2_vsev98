@@ -9,7 +9,7 @@ export function createGetter(path) {
 
   return function getter(obj) {
     switch (true) {
-      case typeof obj !== "object":
+      case i === keysArr.length:
         i = 0;
         return obj;
       case obj === null:
