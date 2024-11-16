@@ -7,9 +7,11 @@ export function createGetter(path) {
   const keysArr = path.split(".");
 
   return function getter(obj) {
-
     for (const key of keysArr) {
-      if (!Object.keys(obj).length) return undefined;
+      if (!obj.hasOwnProperty(key)) {
+        return;
+      }
+
       obj = obj[key];
     }
     return obj;
