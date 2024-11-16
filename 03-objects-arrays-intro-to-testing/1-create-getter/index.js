@@ -5,20 +5,17 @@
  */
 export function createGetter(path) {
   const keysArr = path.split(".");
-  let i = 0;
 
   return function getter(obj) {
-    switch (true) {
-      case i === keysArr.length:
-        i = 0;
-        return obj;
-      case obj === null:
-        return null;
-      case !Object.keys(obj).length || typeof obj === "undefined":
-        return undefined;
+    if (!Object.keys(obj).length || typeof obj === "undefined")
+      return undefined;
 
-      default:
-        return (obj = getter(obj[keysArr[i++]]));
+    let value = obj[keysArr[0]];
+
+    for (let i = 1; i < keysArr.length; i++) {
+      value = value[keysArr[i]];
     }
+
+    return value;
   };
 }
