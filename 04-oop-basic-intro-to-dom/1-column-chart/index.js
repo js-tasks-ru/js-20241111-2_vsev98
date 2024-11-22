@@ -48,16 +48,21 @@ export default class ColumnChart {
   createChatBodyTemplate() {
     const arrData = this.getColumnProps(this.data);
 
-    return arrData.map(({ value, percent }) => {
+    return arrData
+      .map(({ value, percent }) => {
         return `<div style="--value: ${value}" data-tooltip="${percent}"></div>`;
       })
       .join("");
   }
 
+  createChartClasses() {
+    return this.data.length
+      ? "column-chart"
+      : "column-chart column-chart_loading";
+  }
+
   createElementTemplate() {
-    return `<div class="${
-      this.data.length ? "column-chart" : "column-chart column-chart_loading"
-    }" style="--chart-height: 50">
+    return `<div class="${this.createChartClasses()}" style="--chart-height: 50">
                 <div class="column-chart__title">
                     ${this.label}
                 </div>
@@ -73,8 +78,10 @@ export default class ColumnChart {
             </div>`;
   }
 
-  update(data) {
-    this.data = data;
+  update(newData) {
+    this.data = newData;
+    this.element.querySelector("[data-element=body]").innerHTML =
+      this.createChatBodyTemplate();
   }
   remove() {
     this.element.remove();
