@@ -18,7 +18,7 @@ export default class NotificationMessage {
   }
 
   createElementTemplate() {
-    return `<div class="${this.type}" style="--value:20s">
+    return `<div class="notification ${this.type}" style="--value:20s">
               <div class="timer"></div>
               <div class="inner-wrapper">
                   <div class="notification-header">${this.type}</div>
@@ -29,20 +29,18 @@ export default class NotificationMessage {
             </div>`;
   }
 
-  show(parentElement) {
-    this.element = this.createElement(this.createElementTemplate());
-
-    if (!!parentElement) {
-      parentElement.append(this.element);
-    }
-    setTimeout(this.remove.bind(this), this.duration);
+  show(parentElement = document.body) {
+    parentElement.append(this.element);
+    this.timerId = setTimeout(this.remove.bind(this), this.duration);
   }
 
   remove() {
     this.element.remove();
+    clearTimeout(this.timerId);
   }
 
   destroy() {
     this.remove();
+    clearTimeout(this.timerId);
   }
 }
