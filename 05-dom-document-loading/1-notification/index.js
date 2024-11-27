@@ -1,5 +1,7 @@
 export default class NotificationMessage {
   element;
+  isAdded = false;
+
   constructor(
     message = "",
     { duration = 2000, type = "success" } = { duration: 2000, type: "success" }
@@ -19,7 +21,7 @@ export default class NotificationMessage {
 
   createElementTemplate() {
     return `<div class="notification ${this.type}" style="--value:${
-      this.duration / 1000
+      (this.duration + 100) / 1000
     }s">
               <div class="timer"></div>
               <div class="inner-wrapper">
@@ -32,12 +34,16 @@ export default class NotificationMessage {
   }
 
   show(parentElement = document.body) {
-    console.log(parentElement.children);
-    console.log(parentElement.contains(this.element));
-    console.log(this.element);
-
+    if (NotificationMessage.isAdded) return;
     parentElement.append(this.element);
-    this.timerId = setTimeout(this.remove.bind(this), this.duration);
+
+    NotificationMessage.isAdded = true;
+
+    this.timerId = setTimeout(() => {
+      NotificationMessage.isAdded = false;
+
+      this.remove();
+    }, this.duration);
   }
 
   remove() {
