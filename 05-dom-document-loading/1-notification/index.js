@@ -1,6 +1,6 @@
 export default class NotificationMessage {
   element;
-  isAdded = false;
+  lastElementShown;
 
   constructor(
     message = "",
@@ -15,7 +15,6 @@ export default class NotificationMessage {
   createElement(template) {
     const element = document.createElement("div");
     element.innerHTML = template;
-
     return element.firstElementChild;
   }
 
@@ -34,16 +33,14 @@ export default class NotificationMessage {
   }
 
   show(parentElement = document.body) {
-    if (NotificationMessage.isAdded) return;
-    parentElement.append(this.element);
+    if (NotificationMessage.lastElementShown) {
+      this.destroy.call(NotificationMessage.lastElementShown);
+      parentElement.append(this.element);
+    }
 
-    NotificationMessage.isAdded = true;
+    NotificationMessage.lastElementShown = this;
 
-    this.timerId = setTimeout(() => {
-      NotificationMessage.isAdded = false;
-
-      this.remove();
-    }, this.duration);
+    this.timerId = setTimeout(() => this.remove(), this.duration);
   }
 
   remove() {
