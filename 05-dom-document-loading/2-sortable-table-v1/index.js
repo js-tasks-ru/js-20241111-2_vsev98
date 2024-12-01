@@ -1,10 +1,12 @@
 export default class SortableTable {
   static columnSort;
+  subElements = {}
 
   constructor(headerConfig = [], data = []) {
     this.headerConfig = headerConfig;
     this.data = data;
     this.element = this.createElement(this.createTableTemplate());
+    this.selectSubElements();
   }
 
   createElement(template) {
@@ -129,9 +131,10 @@ export default class SortableTable {
     return word.charAt(0).toUpperCase() + word.slice(1);
   }
 
-  get subElements() {
-    const body = this.element.querySelector('[data-element="body"]');
-    return { body };
+  selectSubElements() {
+    this.element.querySelectorAll('[data-element]').forEach(element => {
+      this.subElements[element.dataset.element] = element;
+    });
   }
 
   remove() {
