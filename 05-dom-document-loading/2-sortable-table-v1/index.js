@@ -74,7 +74,7 @@ export default class SortableTable {
   }
 
   createTableCellTemplate(product, { id, template }) {
-    return id === "images" && template
+    return template
       ? template(product[id])
       : `<div class="sortable-table__cell">${product[id]}</div>`;
   }
