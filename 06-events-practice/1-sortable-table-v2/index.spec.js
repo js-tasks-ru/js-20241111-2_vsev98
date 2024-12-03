@@ -1,4 +1,6 @@
-import SortableTable from './index.js';
+// import * as SortableTable from './index.js';
+import {default as SortableTable} from './index.js';
+
 
 const data = [
   {
