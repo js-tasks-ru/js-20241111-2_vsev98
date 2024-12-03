@@ -1,5 +1,4 @@
-import { default as SortableTableV1 } from "/05-dom-document-loading/2-sortable-table-v1/index.js";
-// import SortableTable from "/05-dom-document-loading/2-sortable-table-v1/index.js";
+import { default as SortableTableV1 } from "../../05-dom-document-loading/2-sortable-table-v1/index.js";
 
 export default class SortableTableV2 extends SortableTableV1 {
   constructor(headersConfig, { data = [], sorted = {} } = {}) {
@@ -8,35 +7,38 @@ export default class SortableTableV2 extends SortableTableV1 {
     this.data = data;
     this.headersConfig = headersConfig;
     this.sorted = sorted;
-    this.id = this.sorted.id;
-    this.order = this.sorted.order;
-    // this.element = this.createElement(this.createTableTemplate());
-
-    // { this.id, this.order } = this.sorted;
+    this.isSortLocally = true;
+    this.arrowElement = this.createArrowElement();
+    this.sortByDefault();
     this.createListeners();
   }
   handleHeaderCellClick = (e) => {
-    // const { id, order } = this.sorted;
     const cellElement = e.target.closest(".sortable-table__cell");
 
-    if (!cellElement) return;
-    if (!cellElement.dataset.sortable) return;
+    if (!cellElement || !cellElement.dataset.sortable) return;
 
-    console.log(cellElement.dataset.sortable);
+    const currentOrder = cellElement.dataset.order;
+    const newOrder = currentOrder === "desc" ? "asc" : "desc";
+    cellElement.dataset.order = newOrder;
 
-    {
-      console.log(cellElement);
-    }
     const sortField = cellElement.dataset.id;
-    const sortOrder = cellElement.dataset.sortable;
+    cellElement.appendChild(this.arrowElement);
 
-    // debugger;
-    this.sort(sortField, sortOrder).bind(this.element);
+    this.sortCommon(sortField, newOrder);
   };
 
-  sort(sortField, sortOrder) {
+  sortByDefault() {
+    const { id, order } = this.sorted;
+    const cellElement = this.element.querySelector(`[data-id = "${id}"]`);
+    
+    cellElement.dataset.order = order || 'desc';
+    cellElement.appendChild(this.arrowElement);
+
+    this.sortOnClient(id, cellElement.dataset.order);
+  }
+
+  sortCommon(sortField, sortOrder) {
     if (this.isSortLocally) {
-      //
       this.sortOnClient(sortField, sortOrder);
     } else {
       this.sortOnServer();
@@ -44,9 +46,22 @@ export default class SortableTableV2 extends SortableTableV1 {
   }
 
   sortOnClient(sortField, sortOrder) {
-    sort.super(sortField, sortOrder);
+    super.sort(sortField, sortOrder);
   }
+
   sortOnServer() {}
+
+  createArrowElement() {
+    const tempElement = document.createElement("div");
+    tempElement.innerHTML = this.createArrowTemplate();
+    return tempElement.firstElementChild;
+  }
+
+  createArrowTemplate() {
+    return `<span data-element="arrow" class="sortable-table__sort-arrow">
+             <span class="sort-arrow"></span>
+           </span>`;
+  }
 
   createListeners() {
     this.subElements.header.addEventListener(
