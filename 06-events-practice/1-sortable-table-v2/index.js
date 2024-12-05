@@ -16,9 +16,9 @@ export default class SortableTableV2 extends SortableTableV1 {
     const cellElement = e.target.closest(".sortable-table__cell");
 
     if (!cellElement || !cellElement.dataset.sortable) return;
-
+    
     const currentOrder = cellElement.dataset.order;
-    const newOrder = currentOrder === "desc" ? "asc" : "desc";
+    const newOrder = currentOrder === "asc" ? "desc" : "asc";
     cellElement.dataset.order = newOrder;
 
     const sortField = cellElement.dataset.id;
@@ -28,13 +28,13 @@ export default class SortableTableV2 extends SortableTableV1 {
   };
 
   sortByDefault() {
-    const { id, order } = this.sorted;
+    const { id, order = 'asc' } = this.sorted;
     const cellElement = this.element.querySelector(`[data-id = "${id}"]`);
     
-    cellElement.dataset.order = order || 'desc';
+    cellElement.dataset.order = order;
     cellElement.appendChild(this.arrowElement);
 
-    this.sortOnClient(id, cellElement.dataset.order);
+    this.sortOnClient(id, order);
   }
 
   sortCommon(sortField, sortOrder) {
