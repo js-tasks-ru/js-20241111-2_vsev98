@@ -1,6 +1,6 @@
 export default class SortableTable {
   static columnSort;
-  subElements = {}
+  subElements = {};
 
   constructor(headerConfig = [], data = []) {
     this.headerConfig = headerConfig;
@@ -47,15 +47,7 @@ export default class SortableTable {
     return `
       <div class="sortable-table__cell" data-id="${id}" data-sortable="${sortable}">
         <span>${columnName}</span>
-        ${sortable ? this.createArrowForSortableColumnTemplate() : ""}
       </div>`;
-  }
-
-  createArrowForSortableColumnTemplate() {
-    return `
-      <span data-element="arrow" class="sortable-table__sort-arrow">
-        <span class="sort-arrow"></span>
-      </span>`;
   }
 
   createTableBodyTemplate() {
@@ -132,7 +124,7 @@ export default class SortableTable {
   }
 
   selectSubElements() {
-    this.element.querySelectorAll('[data-element]').forEach(element => {
+    this.element.querySelectorAll("[data-element]").forEach((element) => {
       this.subElements[element.dataset.element] = element;
     });
   }
