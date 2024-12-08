@@ -206,6 +206,7 @@ export default class DoubleSlider {
 
   destroy() {
     this.element.remove();
-    this.destroyListeners();
+    
+    this.destroyListeners(); 
   }
 }
