@@ -3,30 +3,26 @@ export default class DoubleSlider {
   constructor({
     min = 100,
     max = 200,
-    selected: { from = 110, to = 190 } = {},
+    selected: { from = min, to = max } = {},
     formatValue = (value) => `$${value}`,
   } = {}) {
-   
-    this.valueSign = "$";
-    this.min = min;
-    this.max = max;
+    this.minRange = min;
+    this.maxRange = max;
     this.formatValue = formatValue;
 
     this.fromPointer = this.percentValue(from, min, max);
     this.toPointer = this.percentValue(to, max, min);
 
-    this.minRange = this.formatValue(from);
-    this.maxRange = this.formatValue(to);
+    this.min = from; //?? min //min && from;
+    this.max = to; //max;
 
     this.element = this.createElement(this.createElementTemplate());
 
     this.selectSubElements();
+
     this.createListeners();
   }
 
-  formatValue(value) {
-    return this.valueSign + value;
-  }
   percentValue(currentValue, rangeStart, rangeEnd) {
     const rangeDifference = Math.abs(rangeStart - rangeEnd);
     if (rangeDifference === 0) {
@@ -48,30 +44,30 @@ export default class DoubleSlider {
 
   createElementTemplate() {
     return `
-    <div class="range-slider">
-        <span data-element="from">${this.minRange}</span>
-        <div data-element="inner" class="range-slider__inner">
-            ${this.createProgressTemplate()}
-            ${this.createThumbLeftTemplate()}
-            ${this.createThumbRightTemplate()}
-        </div>
-        <span data-element="to">${this.maxRange}</span>
-    </div>`;
+      <div class="range-slider">
+          <span data-element="from">${this.formatValue(this.min)}</span>
+          <div data-element="inner" class="range-slider__inner">
+              ${this.createProgressTemplate()}
+              ${this.createThumbLeftTemplate()}
+              ${this.createThumbRightTemplate()}
+          </div>
+          <span data-element="to">${this.formatValue(this.max)}</span>
+      </div>`;
   }
 
   createProgressTemplate() {
     return `
-     <span data-element="progress" class="range-slider__progress"  style="left:${this.fromPointer}; right:${this.toPointer}"></span>`;
+       <span data-element="progress" class="range-slider__progress"  style="left:${this.fromPointer}; right:${this.toPointer}"></span>`;
   }
 
   createThumbLeftTemplate() {
     return `
-      <span data-element="thumbLeft" class="range-slider__thumb-left" style="left:${this.fromPointer}"></span>`;
+        <span data-element="thumbLeft" class="range-slider__thumb-left" style="left:${this.fromPointer}"></span>`;
   }
 
   createThumbRightTemplate() {
     return `
-     <span  data-element="thumbRight" class="range-slider__thumb-right" style="right:${this.toPointer}"></span>`;
+       <span  data-element="thumbRight" class="range-slider__thumb-right" style="right:${this.toPointer}"></span>`;
   }
 
   getPercentages(element, clientX, sideRange) {
@@ -89,17 +85,28 @@ export default class DoubleSlider {
 
   handlePointerDown = (e) => {
     const target = e.target;
+
+    this.element.addEventListener("range-select", this.handleRangeSelect);
+
+    const eventThumb = new CustomEvent("range-select", {
+      detail: {
+        from: this.min,
+        to: this.max,
+      },
+      bubbles: true,
+    });
+
+    this.element.dispatchEvent(eventThumb);
+
     if (target.classList.contains("range-slider__thumb-left")) {
       const lineProcess = target.closest(".range-slider__inner");
 
-        lineProcess.setPointerCapture(e.pointerId);
+      //   lineProcess.setPointerCapture(e.pointerId);
 
       lineProcess.onpointermove = (e) => {
         this.fromPointer = this.getPercentages(lineProcess, e.clientX, "left");
 
-        this.minRange = this.formatValue(
-          (this.min * (100 + parseInt(this.fromPointer))) / 100
-        );
+        this.min = (this.minRange * (100 + parseInt(this.fromPointer))) / 100;
 
         if (parseInt(this.toPointer) + parseInt(this.fromPointer) > 100) {
           this.stopMovingThumb(lineProcess);
@@ -115,14 +122,14 @@ export default class DoubleSlider {
     if (target.classList.contains("range-slider__thumb-right")) {
       const lineProcess = target.closest(".range-slider__inner");
 
-        lineProcess.setPointerCapture(e.pointerId);
+      //   lineProcess.setPointerCapture(e.pointerId);
 
       lineProcess.onpointermove = (e) => {
         this.toPointer = this.getPercentages(lineProcess, e.clientX, "right");
 
-        this.maxRange = this.formatValue(
-          (this.max * (100 - parseInt(this.toPointer))) / 100
-        );
+        this.max = (this.maxRange * (100 - parseInt(this.toPointer))) / 100;
+
+      
 
         if (parseInt(this.toPointer) + parseInt(this.fromPointer) > 100) {
           this.stopMovingThumb(lineProcess);
@@ -134,13 +141,18 @@ export default class DoubleSlider {
         this.stopMovingThumb(lineProcess);
       };
     }
+
   };
+
+  handleRangeSelect() {}
 
   updateElement(datasetElement) {
     const value =
       datasetElement === "from"
-        ? this.min + (parseInt(this.fromPointer) / 100) * (this.max - this.min)
-        : this.max - (parseInt(this.toPointer) / 100) * (this.max - this.min);
+        ? this.minRange +
+          (parseInt(this.fromPointer) / 100) * (this.maxRange - this.minRange)
+        : this.maxRange -
+          (parseInt(this.toPointer) / 100) * (this.maxRange - this.minRange);
 
     const formattedValue = this.formatValue(value);
 
@@ -166,21 +178,24 @@ export default class DoubleSlider {
   }
 
   stopMovingThumb(element) {
-    element.onpointerup = function (e) {
+    element.onpointerup = (e) => {
       element.onpointermove = null;
       element.onpointerup = null;
+      this.element.removeEventListener("range-select", this.handleRangeSelect);
     };
   }
 
-
   createListeners() {
     this.element.addEventListener("pointerdown", this.handlePointerDown);
-
+    this.subElements.thumbRight.addEventListener(
+      "range-select",
+      this.handleRangeSelect
+    );
   }
 
   destroyListeners() {
     this.element.removeEventListener("pointerdown", this.handlePointerDown);
-
+    this.element.removeEventListener("range-select", this.handleRangeSelect);
   }
 
   selectSubElements() {
