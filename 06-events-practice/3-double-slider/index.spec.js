@@ -181,6 +181,8 @@ describe("events-practice/double-slider", () => {
       clientX: 500,
       bubbles: true,
     });
+    // console.log(leftBoundary.textContent);
+    // console.log(rightBoundary.textContent);
 
     leftSlider.dispatchEvent(down);
     leftSlider.dispatchEvent(move);
