@@ -7,7 +7,7 @@ export default class SortableTableV2 extends SortableTableV1 {
     this.data = data;
     this.headersConfig = headersConfig;
     this.sorted = sorted;
-    this.isSortLocally = true;
+    this.isSortLocally = false;
     this.arrowElement = this.createArrowElement();
     this.sortByDefault();
     this.createListeners();
@@ -30,10 +30,15 @@ export default class SortableTableV2 extends SortableTableV1 {
   sortByDefault() {
     const { id, order = "asc" } = this.sorted;
     const cellElement = this.element.querySelector(`[data-id = "${id}"]`);
-
+  
+    if (!cellElement) {
+      // console.error(`No header found with id: ${id}`);
+      return;
+    }
+  
     cellElement.dataset.order = order;
     cellElement.appendChild(this.arrowElement);
-
+  
     this.sortOnClient(id, order);
   }
 
