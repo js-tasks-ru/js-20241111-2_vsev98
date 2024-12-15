@@ -37,9 +37,15 @@ export default class SortableTableV3 extends SortableTableV2 {
 
   async fetchData() {
     try {
+      this.renderLoadingLine();
       this.data = await fetchJson(this.createUrl());
 
-      if (this.rowStart === 0) {
+      if (!this.data.length) {
+        this.messageError();
+        return;
+      }
+
+      if (!this.rowStart) {
         this.render();
       }
       this.selectSubElements();
@@ -83,6 +89,20 @@ export default class SortableTableV3 extends SortableTableV2 {
     super.update();
   }
 
+  messageError() {
+    this.subElements.body.innerHTML = `
+    <div>
+        <h2>Ошибка при загрузке товаров</h2>
+        <p>По заданному критерию запроса данные отсутствуют</p>
+    </div>`;
+  }
+
+  renderLoadingLine() {
+    this.subElements.body.insertAdjacentHTML('beforeend',`
+        <div data-elem="loading" class="loading-line sortable-table__loading-line"></div>
+    `);
+  }
+
   handleProductsContainerScroll = (e) => {
     const windowBottom =
       document.documentElement.getBoundingClientRect().bottom;
@@ -96,7 +116,7 @@ export default class SortableTableV3 extends SortableTableV2 {
 
       this.fetchData().finally(() => {
         this.isLoading = false;
-        this.subElements.body.innerHTML += this.createTableBodyTemplate();
+        this.subElements.body.insertAdjacentHTML('beforeend',this.createTableBodyTemplate());
       });
     }
   };
