@@ -6,24 +6,22 @@ const BACKEND_URL = "https://course-js.javascript.ru";
 export default class SortableTableV3 extends SortableTableV2 {
   constructor(
     headersConfig,
-    { data = [], sorted = {} } = {},
-    url = "api/rest/products"
+    {
+      data = [],
+      sorted = {},
+      url = "api/rest/products",
+      isSortLocally = false,
+    } = {}
   ) {
     super(headersConfig, data);
-
-    // this.sorted = sorted;
 
     this.rowStart = 0;
     this.rowEnd = 30;
     this.isLoading = false;
-    // this.data = data;
-    // this.headersConfig = headersConfig;
+    this.isSortLocally = isSortLocally;
+
     this.url = url;
     this.element = this.createElement(this.createProductsContainer());
-
-    // this.isSortLocally = false;
-    // fetchJson(this.createUrl())
-    // console.log(this.subElements);
 
     this.fetchData();
     this.selectSubElements();
@@ -37,25 +35,16 @@ export default class SortableTableV3 extends SortableTableV2 {
     </div>`;
   }
 
-  // selectSubElements() {
-  //   this.element.parentElement.querySelectorAll("[data-element]").forEach((element) => {
-  //     this.subElements[element.dataset.element] = element;
-  //   });
-  // }
-
   async fetchData() {
     try {
       this.data = await fetchJson(this.createUrl());
 
-      // console.log(this.data);
-
-      // this.update();
       if (this.rowStart === 0) {
         this.render();
       }
+      this.selectSubElements();
     } catch (error) {
       console.error("Error fetching data:", error);
-      return [];
     }
   }
 
@@ -64,9 +53,8 @@ export default class SortableTableV3 extends SortableTableV2 {
     url.searchParams.append("_embed", "subcategory.category");
     url.searchParams.append("_sort", `${this.id ?? "title"}`);
     url.searchParams.append("_order", `${this.order ?? "asc"}`);
-    url.searchParams.append("_start", `${this.rowStart}`); //this.to.toISOString());
+    url.searchParams.append("_start", `${this.rowStart}`);
     url.searchParams.append("_end", `${this.rowEnd}`);
-    console.log(url.href);
 
     return url.toString();
   }
@@ -89,7 +77,6 @@ export default class SortableTableV3 extends SortableTableV2 {
     this.order = order;
     this.fetchData();
     this.render();
-   
   }
 
   render() {
@@ -109,8 +96,7 @@ export default class SortableTableV3 extends SortableTableV2 {
 
       this.fetchData().finally(() => {
         this.isLoading = false;
-        this.subElements.body.innerHTML +=
-          this.createTableBodyTemplate();
+        this.subElements.body.innerHTML += this.createTableBodyTemplate();
       });
     }
   };

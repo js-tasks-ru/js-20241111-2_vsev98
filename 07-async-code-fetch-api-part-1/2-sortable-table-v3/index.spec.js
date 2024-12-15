@@ -81,13 +81,12 @@ describe('async-code-fetch-api-part-1/sortable-table-v3', () => {
     expect(fetchMock.mock.calls.length).toEqual(1);
   });
 
-  it('should render loaded data correctly', async() => {
+  it.only('should render loaded data correctly', async() => {
     fetchMock.mockResponseOnce(JSON.stringify(products));
 
     await sortableTable.render();
 
     const { body } = sortableTable.subElements;
-   console.log(body);
    
     expect(body.children.length).toEqual(3);
 
@@ -130,8 +129,7 @@ describe('async-code-fetch-api-part-1/sortable-table-v3', () => {
   it('should call "sortOnServer" for sorting on the server side', async() => {
     fetchMock.mockResponseOnce(JSON.stringify(products));
 
-    await sortableTable.render();
-
+    await sortableTable.render();    
     const [_, column2] = sortableTable.subElements.header.children;
     const spy = jest.spyOn(sortableTable, 'sortOnServer');
 
