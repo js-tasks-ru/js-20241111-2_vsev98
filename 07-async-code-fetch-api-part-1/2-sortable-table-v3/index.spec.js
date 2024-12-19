@@ -1,4 +1,4 @@
-import SortableTable from './index.js';
+import { default as SortableTable } from './index.js';
 
 import { products, bestsellers } from './__mocks__/products-data.js';
 
@@ -87,7 +87,7 @@ describe('async-code-fetch-api-part-1/sortable-table-v3', () => {
     await sortableTable.render();
 
     const { body } = sortableTable.subElements;
-
+   
     expect(body.children.length).toEqual(3);
 
     const [row1, row2, row3] = body.children;
@@ -129,8 +129,7 @@ describe('async-code-fetch-api-part-1/sortable-table-v3', () => {
   it('should call "sortOnServer" for sorting on the server side', async() => {
     fetchMock.mockResponseOnce(JSON.stringify(products));
 
-    await sortableTable.render();
-
+    await sortableTable.render();    
     const [_, column2] = sortableTable.subElements.header.children;
     const spy = jest.spyOn(sortableTable, 'sortOnServer');
 
