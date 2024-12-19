@@ -81,7 +81,7 @@ describe('async-code-fetch-api-part-1/sortable-table-v3', () => {
     expect(fetchMock.mock.calls.length).toEqual(1);
   });
 
-  it.only('should render loaded data correctly', async() => {
+  it('should render loaded data correctly', async() => {
     fetchMock.mockResponseOnce(JSON.stringify(products));
 
     await sortableTable.render();

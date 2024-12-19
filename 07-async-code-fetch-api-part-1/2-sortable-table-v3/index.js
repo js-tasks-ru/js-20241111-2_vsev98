@@ -23,9 +23,9 @@ export default class SortableTableV3 extends SortableTableV2 {
     this.url = url;
     this.element = this.createElement(this.createProductsContainer());
 
-    this.fetchData();
     this.selectSubElements();
     this.createListeners();
+    this.render();
   }
 
   createProductsContainer() {
@@ -45,9 +45,6 @@ export default class SortableTableV3 extends SortableTableV2 {
         return;
       }
 
-      if (!this.rowStart) {
-        this.render();
-      }
       this.selectSubElements();
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -85,8 +82,15 @@ export default class SortableTableV3 extends SortableTableV2 {
     this.render();
   }
 
-  render() {
+  async render() {
+    this.data = await this.loadData();
+    
     super.update();
+  }
+
+  async loadData() {
+    const data = await fetchJson(this.createUrl()); 
+    return data;
   }
 
   messageError() {
@@ -98,9 +102,12 @@ export default class SortableTableV3 extends SortableTableV2 {
   }
 
   renderLoadingLine() {
-    this.subElements.body.insertAdjacentHTML('beforeend',`
+    this.subElements.body.insertAdjacentHTML(
+      "beforeend",
+      `
         <div data-elem="loading" class="loading-line sortable-table__loading-line"></div>
-    `);
+    `
+    );
   }
 
   handleProductsContainerScroll = (e) => {
@@ -116,7 +123,10 @@ export default class SortableTableV3 extends SortableTableV2 {
 
       this.fetchData().finally(() => {
         this.isLoading = false;
-        this.subElements.body.insertAdjacentHTML('beforeend',this.createTableBodyTemplate());
+        this.subElements.body.insertAdjacentHTML(
+          "beforeend",
+          this.createTableBodyTemplate()
+        );
       });
     }
   };
