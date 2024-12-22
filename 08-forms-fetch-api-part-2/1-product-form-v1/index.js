@@ -23,7 +23,7 @@ export default class ProductForm {
   createElementTemplate() {
     return `
            <div class="product-form">
-            <form id="productForm" data-element="productForm" class="form-grid">
+            <form  name ="productForm" data-element="productForm" class="form-grid">
              ${this.createProductNameTemplate()}
              ${this.createProductDescriptionTemplate()}
              ${this.createProductPhotoTemplate()}
@@ -66,7 +66,7 @@ export default class ProductForm {
               <label class="form-label">Фото</label>
               <div data-element="imageListContainer">
               <ul class="sortable-list">
-              ${this.productId ? this.createPhotoListTemplate() : ""}
+              
               </ul>
               </div>
                 <button type="button" name="uploadImage" class="button-primary-outline fit-content">
@@ -89,8 +89,8 @@ export default class ProductForm {
 
         return `
             <li class="products-edit__imagelist-item sortable-list__item">
-            <input type="hidden" name="url" value="${imageSource}">
-            <input type="hidden" name="source" value="${imageUrl}">
+            <input type="hidden" name="url" value="${escapeHtml(imageSource)}">
+            <input type="hidden" name="source" value="${escapeHtml(imageUrl)}">
             <span>
                 <img src="icon-grab.svg" data-grab-handle="" alt="grab">
                 <img class="sortable-table__cell-img" alt="Image" src="${imageSource}">
@@ -109,26 +109,8 @@ export default class ProductForm {
             <div class="form-group form-group__half_left">
               <label class="form-label">Категория</label>
               <select class="form-control" data-element="productCategory" id="subcategory" name="subcategory">
-             
               </select>
             </div>`;
-  }
-
-  createCategoryOptionTemplate() {
-    if (!this.dataCategory) {
-      return "";
-    }
-
-    return this.dataCategory
-      .map((category) => {
-        return category.subcategories
-          .map((subcategory) => {
-            const textOption = `${category.title} > ${subcategory.title}`;
-            return `<option value="${subcategory.id}">${textOption}</option>`;
-          })
-          .join("");
-      })
-      .join("");
   }
 
   createProductPriceTemplate() {
@@ -166,15 +148,14 @@ export default class ProductForm {
 
   async fetchData() {
     try {
+      this.dataCategory = await fetchJson(this.createUrlCategory());
       const dataProduct = await fetchJson(this.createUrlProduct());
       this.dataProduct = dataProduct[0];
 
-      this.dataCategory = await fetchJson(this.createUrlCategory());
-
       this.element = this.createElement(this.createElementTemplate());
+
       this.selectSubElements();
       this.updateForm();
-
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -206,6 +187,10 @@ export default class ProductForm {
       this.element = this.createElement(this.createElementTemplate());
       this.selectSubElements();
     }
+
+    const form = this.subElements.productForm;
+    form.addEventListener("submit", this.save.bind(this));
+
     return this.element;
   }
 
@@ -229,8 +214,6 @@ export default class ProductForm {
         form.elements[key].value = this.dataProduct[key];
       }
     }
-
-
   }
 
   async updateImages() {
@@ -247,7 +230,9 @@ export default class ProductForm {
 
     this.dataCategory.forEach((category) => {
       category.subcategories.forEach((subcategory) => {
-        const textOption = `${category.title} > ${subcategory.title}`;
+        const textOption = `${escapeHtml(category.title)} > ${escapeHtml(
+          subcategory.title
+        )}`;
         const isSelected = subcategoryProd === subcategory.id;
         const option = new Option(
           textOption,
@@ -261,7 +246,56 @@ export default class ProductForm {
     subcategorySelect.append(fragment);
   }
 
-  async save() {}
+  async save(event) {
+    event.preventDefault(); 
+
+    const form = this.subElements.productForm;
+    const formData = new FormData(form);
+    const escapedData = {};
+    const images = [];
+    let objImage = {};
+
+    for (const [key, value] of formData.entries()) {
+      escapedData[key] = isNaN(value) ? escapeHtml(value.trim()) : +value;
+
+      if (key === "url" || key === "source") {
+        objImage[key] = escapedData[key];
+
+        if (key === "source") {
+          images.push(objImage);
+          objImage = {};
+        }
+      }
+    }
+    escapedData.id = this.productId;
+    escapedData.images = images;
+    delete escapedData.url;
+    delete escapedData.source;
+
+    try {
+      const method = this.productId ? "PATCH" : "POST";
+      const response = await fetchJson(new URL(this.urlProduct, BACKEND_URL), {
+        method,
+        body: JSON.stringify(escapedData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      this.element.dispatchEvent(
+        new CustomEvent("product-updated", {
+          detail: { productId: escapedData.id, status: "updated" }, 
+        })
+      );
+      this.element.dispatchEvent(
+        new CustomEvent("product-saved", {
+          detail: { productId: escapedData.id, status: "saved" }, 
+        })
+      );
+    } catch (error) {
+      console.error("Error saving product:", error);
+    }
+  }
 
   remove() {
     this.element.remove();
@@ -271,4 +305,3 @@ export default class ProductForm {
     this.remove();
   }
 }
-
