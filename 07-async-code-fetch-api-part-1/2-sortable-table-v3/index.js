@@ -141,7 +141,6 @@ export default class SortableTableV3 extends SortableTableV2 {
 
   destroyListeners() {
     super.destroyListeners();
-    //  window.destroyListeners("scroll", this.handleProductsContainerScroll);
   }
 
   destroy() {
