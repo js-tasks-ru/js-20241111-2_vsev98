@@ -7,10 +7,11 @@ export default class SortableTableV2 extends SortableTableV1 {
     this.data = data;
     this.headersConfig = headersConfig;
     this.sorted = sorted;
-    this.isSortLocally = false;
+
+    this.isSortLocally = true;
     this.arrowElement = this.createArrowElement();
     this.sortByDefault();
-    this.createListeners();
+    this.createListeners();    
   }
   handleHeaderCellPointerdown = (e) => {
     const cellElement = e.target.closest(".sortable-table__cell");
@@ -32,7 +33,7 @@ export default class SortableTableV2 extends SortableTableV1 {
     const cellElement = this.element.querySelector(`[data-id = "${id}"]`);
   
     if (!cellElement) {
-      // console.error(`No header found with id: ${id}`);
+     
       return;
     }
   
