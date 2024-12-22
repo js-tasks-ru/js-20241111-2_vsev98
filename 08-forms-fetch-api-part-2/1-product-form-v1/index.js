@@ -247,7 +247,7 @@ export default class ProductForm {
   }
 
   async save(event) {
-    event.preventDefault(); 
+    // event.preventDefault(); 
 
     const form = this.subElements.productForm;
     const formData = new FormData(form);
