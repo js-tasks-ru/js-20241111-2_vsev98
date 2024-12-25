@@ -7,11 +7,18 @@ import fetchJson from "./utils/fetch-json.js";
 
 const BACKEND_URL = "https://course-js.javascript.ru/";
 
-
 export default class Page {
   subElements = {};
 
   constructor() {
+    this.element = this.createElement(this.createElementTemplate());
+    this.selectSubElements();
+
+    this.createComponents();
+    this.createEventListener();
+  }
+
+  createComponents() {
     const now = new Date();
     this.range = {
       from: new Date(now.setMonth(now.getMonth() - 1)),
@@ -22,21 +29,21 @@ export default class Page {
 
     const urls = ["orders", "sales", "customers"];
     this.columnCharts = urls.map((url) => {
+      const isSales = url === "sales";
+      const isOrders = url === "orders";
+
       return new ColumnChart({
         label: url,
-        link: "#",
+        link: isOrders ? "#" : "",
         range: this.range,
         url: `/api/dashboard/${url}`,
+        ...(isSales && { formatHeading: (data) => `$${data}` }),
       });
     });
 
     this.sortableTable = new SortableTable(header, {
-    //   range: this.range,
-      url: "/api/dashboard/bestsellers",
-      // url: `api/dashboard/bestsellers?from=${this.range.from.toISOString()}&to=${this.range.to.toISOString()}`,
+      url: `api/dashboard/bestsellers?from=${this.range.from.toISOString()}&to=${this.range.to.toISOString()}`,
     });
-
-
   }
 
   createElement(template) {
@@ -45,41 +52,33 @@ export default class Page {
     return element.firstElementChild;
   }
 
-   createElementTemplate() {
+  createElementTemplate() {
     return `
         <div class="dashboard">
             <div class="content__top-panel">
                 <h2 class="page-title">Dashboard</h2>
-                <div data-element="rangePicker">
-                  ${this.rangePicker.element.outerHTML}
-                </div>
+                <div data-element="rangePicker"></div>
             </div>
-
             <div data-element="chartsRoot" class="dashboard__charts">
-                <div data-element="ordersChart" class="dashboard__chart_orders">
-                  ${ this.columnCharts[0].element.outerHTML}
-                </div>
-                <div data-element="salesChart" class="dashboard__chart_sales">
-                  ${ this.columnCharts[1].element.outerHTML}
-                </div>
-                <div data-element="customersChart" class="dashboard__chart_customers">
-                   ${ this.columnCharts[2].element.outerHTML}
-                </div>
+                <div data-element="ordersChart" class="dashboard__chart_orders"></div>
+                <div data-element="salesChart" class="dashboard__chart_sales"></div>
+                <div data-element="customersChart" class="dashboard__chart_customers"></div>
             </div>
-
             <h3 class="block-title">Best sellers</h3>
-
-            <div data-element="sortableTable">
-                 ${ this.sortableTable.element.outerHTML}
-                <!-- SortableTable will be rendered here -->
-            </div>
+            <div data-element="sortableTable"></div>
         </div>
      `;
   }
 
   async render() {
-    this.element = this.createElement(this.createElementTemplate());
-    this.selectSubElements();
+    this.subElements.rangePicker.append(this.rangePicker.element);
+
+    this.subElements.sortableTable.append(this.sortableTable.element);
+
+    this.columnCharts.forEach((chart) => {
+      this.subElements[chart.label + "Chart"].append(chart.element);
+    });
+    // this.createEventListener();
 
     return this.element;
   }
@@ -98,35 +97,48 @@ export default class Page {
   }
 
   createEventListener() {
-    this.subElements.rangePicker.addEventListener('date-select', this.handleRangePickerChange);
+    this.subElements.rangePicker.addEventListener(
+      "date-select",
+      this.handleRangePickerChange
+    );
   }
 
   removeEventListener() {
-    this.subElements.rangePicker.removeEventListener('date-select', this.handleRangePickerChange);
+    this.subElements.rangePicker.removeEventListener(
+      "date-select",
+      this.handleRangePickerChange
+    );
   }
 
-  handleRangePickerChange(event) {
+  handleRangePickerChange = (event) => {
     const { from, to } = event.detail;
 
-    if (from && to) {
-      this.range = {
-        from: from,
-        to: to
-      };
+    this.updateDashboard(from, to);
+  };
 
-      this.updateDashboard();
-    }
+  async fetchData(from, to) {
+    const url = this.sortableTable.url;
+    url.searchParams.set("_start", 1);
+    url.searchParams.set("_end", 20);
+    url.searchParams.set("from", from.toISOString());
+    url.searchParams.set("to", to.toISOString());
+    const response = await fetchJson(url);
+
+    return response;
   }
 
-  updateDashboard() {
-    const { from, to } = this.range;
+  async updateDashboard(from, to) {
+    try {
+      this.columnCharts.forEach((chart) => {
+        chart.loadData(from, to);
+      });
 
-    this.columnCharts.forEach((chart) => {
-      chart.loadData(from, to);
-    });
+      const data = await this.fetchData(from, to);
 
-    this.subElements.sortableTable.replaceWith(this.sortableTable.element);
-    this.subElements.sortableTable = this.sortableTable.element;
+      this.sortableTable.renderRows(data);
+    } catch (error) {
+      throw new Error(error);
+    }
   }
 
   remove() {
@@ -135,5 +147,6 @@ export default class Page {
 
   destroy() {
     this.remove();
+    this.removeEventListener();
   }
 }
