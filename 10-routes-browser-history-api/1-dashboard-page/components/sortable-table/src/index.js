@@ -65,7 +65,7 @@ export default class SortableTable {
       id: headersConfig.find(item => item.sortable).id,
       order: 'asc'
     },
-    isSortLocally = false,
+    isSortLocally = true,
     step = 20,
     start = 1,
     end = start + step
