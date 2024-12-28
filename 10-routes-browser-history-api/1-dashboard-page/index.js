@@ -25,6 +25,8 @@ export default class Page {
       to: new Date(),
     };
 
+    this.baseUrl = new URL(BACKEND_URL);
+
     this.rangePicker = new RangePicker(this.range);
 
     const urls = ["orders", "sales", "customers"];
@@ -36,14 +38,22 @@ export default class Page {
         label: url,
         link: isOrders ? "#" : "",
         range: this.range,
-        url: `/api/dashboard/${url}`,
+        url: new URL(`/api/dashboard/${url}`, BACKEND_URL),
         ...(isSales && { formatHeading: (data) => `$${data}` }),
       });
     });
 
+    const urlForSortTable = this.createUrlSortTable();
     this.sortableTable = new SortableTable(header, {
-      url: `api/dashboard/bestsellers?from=${this.range.from.toISOString()}&to=${this.range.to.toISOString()}`,
+      url: urlForSortTable,
     });
+  }
+
+  createUrlSortTable() {
+    const url = new URL(`/api/dashboard/bestsellers`, BACKEND_URL);
+    url.searchParams.set("from", this.range.from.toISOString());
+    url.searchParams.set("to", this.range.to.toISOString());
+    return url;
   }
 
   createElement(template) {
@@ -75,19 +85,11 @@ export default class Page {
 
     this.subElements.sortableTable.append(this.sortableTable.element);
 
-    this.columnCharts.forEach((chart) => {
-      this.subElements[chart.label + "Chart"].append(chart.element);
-    });
-    // this.createEventListener();
+    this.subElements.ordersChart.append(this.columnCharts[0].element);
+    this.subElements.salesChart.append(this.columnCharts[1].element);
+    this.subElements.customersChart.append(this.columnCharts[2].element);
 
     return this.element;
-  }
-
-  createColumnChart() {
-    const element = document.createElement("div");
-    element.innerHTML = this.columnCharts[0].element;
-
-    return element.firstElementChild;
   }
 
   selectSubElements() {
@@ -122,9 +124,8 @@ export default class Page {
     url.searchParams.set("_end", 20);
     url.searchParams.set("from", from.toISOString());
     url.searchParams.set("to", to.toISOString());
-    const response = await fetchJson(url);
 
-    return response;
+    return await fetchJson(url);
   }
 
   async updateDashboard(from, to) {
