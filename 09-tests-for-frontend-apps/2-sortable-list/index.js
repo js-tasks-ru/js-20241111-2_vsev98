@@ -45,7 +45,7 @@ export default class SortableList {
   handlePointerDownItem = (e) => {
     const target = e.target;
 
-    // удаление элемента 
+    // удаление элемента
     if (target.hasAttribute("data-delete-handle")) {
       target.closest(".sortable-list__item").remove();
     }
@@ -57,8 +57,7 @@ export default class SortableList {
       this.shiftX = e.clientX - this.elementDrag.getBoundingClientRect().left;
       this.shiftY = e.clientY - this.elementDrag.getBoundingClientRect().top;
 
-
-      const width = this.elementDrag.getBoundingClientRect().width; 
+      const width = this.elementDrag.getBoundingClientRect().width;
       this.elementDrag.style.width = `${width}px`;
       this.elementDrag.classList.add("sortable-list__item_dragging");
 
@@ -95,17 +94,19 @@ export default class SortableList {
 
     let droppableBelow = elemBelow.closest(".sortable-list__item");
 
-    if (this.currentDroppable != droppableBelow) {
-      if (this.currentDroppable) {
-        // если вышли из области
-        this.placeHolder.remove();
-      }
+    const { top, bottom } = droppableBelow.getBoundingClientRect();
+    const height = Math.abs(top - bottom);
 
-      this.currentDroppable = droppableBelow;
-
-      if (this.currentDroppable) {
-        //если вошли в область
-        this.insertPlaceHolder();
+    if (e.clientY > top && e.clientY < bottom) {
+      // inside the element (y-axis)
+      if (e.clientY < top + height / 2) {
+        // upper half of the element
+        droppableBelow.before(this.placeHolder);
+        return;
+      } else {
+        // lower half of the element
+        droppableBelow.after(this.placeHolder);
+        return;
       }
     }
   };
@@ -120,18 +121,6 @@ export default class SortableList {
         return item;
       }
     });
-  }
-
-  insertPlaceHolder() {
-    const allItems = this.element.children;
-
-    const indexElement = Array.from(allItems).findIndex(
-      (child) => child === this.currentDroppable
-    );
-
-    indexElement === 0
-      ? this.currentDroppable.before(this.placeHolder)
-      : this.currentDroppable.after(this.placeHolder);
   }
 
   createEventListener() {
