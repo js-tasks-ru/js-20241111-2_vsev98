@@ -69,7 +69,7 @@ export default class ProductForm {
               
               </ul>
               </div>
-                <button type="button" name="uploadImage" class="button-primary-outline fit-content">
+                <button type="button" name="uploadImage" data-element="uploadImage" class="button-primary-outline fit-content">
                   <span>Загрузить</span>
                 </button>
             </div>`;
@@ -84,24 +84,27 @@ export default class ProductForm {
 
     return images
       .map((image) => {
-        const imageUrl = image.source || "";
+        const imageName = image.source || "";
         const imageSource = image.url || "";
 
-        return `
-            <li class="products-edit__imagelist-item sortable-list__item">
-            <input type="hidden" name="url" value="${escapeHtml(imageSource)}">
-            <input type="hidden" name="source" value="${escapeHtml(imageUrl)}">
-            <span>
-                <img src="icon-grab.svg" data-grab-handle="" alt="grab">
-                <img class="sortable-table__cell-img" alt="Image" src="${imageSource}">
-                <span>${imageUrl}</span>
-            </span>
-            <button type="button">
-                <img src="icon-trash.svg" data-delete-handle="" alt="delete">
-            </button>
-        </li>`;
+        return this.createImageItem(imageSource, imageName);
       })
       .join("");
+  }
+
+  createImageItem(url, name) {
+    return ` 
+        <li class="products-edit__imagelist-item sortable-list__item">
+        <span>
+            <img src="icon-grab.svg" data-grab-handle="" alt="grab">
+            <img class="sortable-table__cell-img" 
+            alt="${escapeHtml(name)}" src="${escapeHtml(url)}">
+            <span>${escapeHtml(name)}</span>
+        </span>
+        <button type="button">
+            <img src="icon-trash.svg" data-delete-handle="" alt="delete">
+        </button>
+      </li>`;
   }
 
   createProductCategoryTemplate() {
@@ -188,8 +191,10 @@ export default class ProductForm {
       this.selectSubElements();
     }
 
-    const form = this.subElements.productForm;
-    form.addEventListener("submit", this.save.bind(this));
+    const { productForm, uploadImage } = this.subElements;
+
+    productForm.addEventListener("submit", this.save);
+    uploadImage.addEventListener("pointerdown", this.handleUploadImage);
 
     return this.element;
   }
@@ -217,7 +222,7 @@ export default class ProductForm {
   }
 
   async updateImages() {
-    this.subElements.imageListContainer.innerHTML =
+    this.subElements.imageListContainer.firstElementChild.innerHTML =
       this.createPhotoListTemplate();
   }
 
@@ -246,8 +251,51 @@ export default class ProductForm {
     subcategorySelect.append(fragment);
   }
 
-  async save(event) {
-    event.preventDefault(); 
+  handleUploadImage = (e) => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+
+    fileInput.onchange = async () => {
+      const [file] = fileInput.files;
+
+      if (file) {
+        const formData = new FormData();
+        const { uploadImage, imageListContainer } = this.subElements;
+
+        formData.append("image", file);
+
+        uploadImage.classList.add("is-loading");
+        uploadImage.disabled = true;
+
+        const result = await fetchJson("https://api.imgur.com/3/image", {
+          method: "POST",
+          headers: {
+            Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+          },
+          body: formData,
+        });
+
+        const div = document.createElement("div");
+        div.innerHTML = this.createImageItem(result.data.link, file.name);
+
+        imageListContainer.firstElementChild.append(div.firstElementChild);
+
+        uploadImage.classList.remove("is-loading");
+        uploadImage.disabled = false;
+
+        fileInput.remove();
+      }
+    };
+
+    // must be in body for IE
+    fileInput.hidden = true;
+    document.body.appendChild(fileInput);
+    fileInput.click();
+  };
+
+  save = async (event) => {
+    event.preventDefault();
 
     const form = this.subElements.productForm;
     const formData = new FormData(form);
@@ -284,18 +332,18 @@ export default class ProductForm {
 
       this.element.dispatchEvent(
         new CustomEvent("product-updated", {
-          detail: { productId: escapedData.id, status: "updated" }, 
+          detail: { productId: escapedData.id, status: "updated" },
         })
       );
       this.element.dispatchEvent(
         new CustomEvent("product-saved", {
-          detail: { productId: escapedData.id, status: "saved" }, 
+          detail: { productId: escapedData.id, status: "saved" },
         })
       );
     } catch (error) {
       console.error("Error saving product:", error);
     }
-  }
+  };
 
   remove() {
     this.element.remove();

@@ -54,11 +54,13 @@ export default class SortableList {
     if (target.hasAttribute("data-grab-handle")) {
       this.elementDrag = target.closest(".sortable-list__item");
 
-      this.shiftX = e.clientX - this.elementDrag.getBoundingClientRect().left;
-      this.shiftY = e.clientY - this.elementDrag.getBoundingClientRect().top;
+      this.shiftX = e.clientX - this.elementDrag.getBoundingClientRect().x;
+      this.shiftY = e.clientY - this.elementDrag.getBoundingClientRect().y;
 
       const width = this.elementDrag.getBoundingClientRect().width;
       this.elementDrag.style.width = `${width}px`;
+      this.initialPosElement(e);
+
       this.elementDrag.classList.add("sortable-list__item_dragging");
 
       // создание шаблона placeholder
@@ -70,8 +72,8 @@ export default class SortableList {
       document.addEventListener("pointermove", this.handlePointerMove);
 
       document.addEventListener("pointerup", () => {
-        this.elementDrag.className = "sortable-list__item";
-        this.elementDrag.style = "";
+        this.elementDrag.classList.remove("sortable-list__item_dragging");
+        this.elementDrag.removeAttribute("style");
 
         this.placeHolder.replaceWith(this.elementDrag);
 
@@ -81,8 +83,7 @@ export default class SortableList {
   };
 
   handlePointerMove = (e) => {
-    this.elementDrag.style.left = e.pageX - this.shiftX + "px";
-    this.elementDrag.style.top = e.pageY - this.shiftY + "px";
+    this.initialPosElement(e);
 
     this.elementDrag.hidden = true;
 
@@ -111,12 +112,16 @@ export default class SortableList {
     }
   };
 
+  initialPosElement(e) {
+    this.elementDrag.style.left = e.clientX - this.shiftX + "px";
+    this.elementDrag.style.top = e.clientY - this.shiftY + "px";
+  }
   // Определение области над которой переносим элемент
   determiningTransferLocation(e) {
     return document.elementsFromPoint(e.clientX, e.clientY).find((item) => {
       if (
         item.classList.contains("sortable-list__item") &&
-        item.classList.length === 1
+        !item.classList.contains("sortable-list__item_dragging")
       ) {
         return item;
       }
@@ -125,6 +130,10 @@ export default class SortableList {
 
   createEventListener() {
     this.element.addEventListener("pointerdown", this.handlePointerDownItem);
+    
+    this.element.ondragstart = function () {
+      return false;
+    };
   }
   removeEventListener() {
     this.element.addEventListener("pointerdown", this.handlePointerDownItem);
