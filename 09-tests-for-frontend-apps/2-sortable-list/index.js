@@ -45,7 +45,7 @@ export default class SortableList {
   handlePointerDownItem = (e) => {
     const target = e.target;
 
-    // удаление элемента 
+    // удаление элемента
     if (target.hasAttribute("data-delete-handle")) {
       target.closest(".sortable-list__item").remove();
     }
@@ -54,12 +54,13 @@ export default class SortableList {
     if (target.hasAttribute("data-grab-handle")) {
       this.elementDrag = target.closest(".sortable-list__item");
 
-      this.shiftX = e.clientX - this.elementDrag.getBoundingClientRect().left;
-      this.shiftY = e.clientY - this.elementDrag.getBoundingClientRect().top;
+      this.shiftX = e.clientX - this.elementDrag.getBoundingClientRect().x;
+      this.shiftY = e.clientY - this.elementDrag.getBoundingClientRect().y;
 
-
-      const width = this.elementDrag.getBoundingClientRect().width; 
+      const width = this.elementDrag.getBoundingClientRect().width;
       this.elementDrag.style.width = `${width}px`;
+      this.initialPosElement(e);
+
       this.elementDrag.classList.add("sortable-list__item_dragging");
 
       // создание шаблона placeholder
@@ -71,8 +72,8 @@ export default class SortableList {
       document.addEventListener("pointermove", this.handlePointerMove);
 
       document.addEventListener("pointerup", () => {
-        this.elementDrag.className = "sortable-list__item";
-        this.elementDrag.style = "";
+        this.elementDrag.classList.remove("sortable-list__item_dragging");
+        this.elementDrag.removeAttribute("style");
 
         this.placeHolder.replaceWith(this.elementDrag);
 
@@ -82,8 +83,7 @@ export default class SortableList {
   };
 
   handlePointerMove = (e) => {
-    this.elementDrag.style.left = e.pageX - this.shiftX + "px";
-    this.elementDrag.style.top = e.pageY - this.shiftY + "px";
+    this.initialPosElement(e);
 
     this.elementDrag.hidden = true;
 
@@ -95,47 +95,45 @@ export default class SortableList {
 
     let droppableBelow = elemBelow.closest(".sortable-list__item");
 
-    if (this.currentDroppable != droppableBelow) {
-      if (this.currentDroppable) {
-        // если вышли из области
-        this.placeHolder.remove();
-      }
+    const { top, bottom } = droppableBelow.getBoundingClientRect();
+    const height = Math.abs(top - bottom);
 
-      this.currentDroppable = droppableBelow;
-
-      if (this.currentDroppable) {
-        //если вошли в область
-        this.insertPlaceHolder();
+    if (e.clientY > top && e.clientY < bottom) {
+      // inside the element (y-axis)
+      if (e.clientY < top + height / 2) {
+        // upper half of the element
+        droppableBelow.before(this.placeHolder);
+        return;
+      } else {
+        // lower half of the element
+        droppableBelow.after(this.placeHolder);
+        return;
       }
     }
   };
 
+  initialPosElement(e) {
+    this.elementDrag.style.left = e.clientX - this.shiftX + "px";
+    this.elementDrag.style.top = e.clientY - this.shiftY + "px";
+  }
   // Определение области над которой переносим элемент
   determiningTransferLocation(e) {
     return document.elementsFromPoint(e.clientX, e.clientY).find((item) => {
       if (
         item.classList.contains("sortable-list__item") &&
-        item.classList.length === 1
+        !item.classList.contains("sortable-list__item_dragging")
       ) {
         return item;
       }
     });
   }
 
-  insertPlaceHolder() {
-    const allItems = this.element.children;
-
-    const indexElement = Array.from(allItems).findIndex(
-      (child) => child === this.currentDroppable
-    );
-
-    indexElement === 0
-      ? this.currentDroppable.before(this.placeHolder)
-      : this.currentDroppable.after(this.placeHolder);
-  }
-
   createEventListener() {
     this.element.addEventListener("pointerdown", this.handlePointerDownItem);
+    
+    this.element.ondragstart = function () {
+      return false;
+    };
   }
   removeEventListener() {
     this.element.addEventListener("pointerdown", this.handlePointerDownItem);

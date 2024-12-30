@@ -95,12 +95,22 @@ describe('tests-for-frontend-apps/product-form-v2', () => {
   it('should dispatch "product-updated" event after product creating', async () => {
     const spyDispatchEvent = jest.spyOn(productFormComponent.element, 'dispatchEvent');
 
-    fetchMock
-    .once(JSON.stringify({status: 'ok'}));
+    fetchMock.once(JSON.stringify({ status: "ok" }));
 
-    await productFormComponent.save();
+    const mockEvent = {
+      preventDefault: jest.fn(),
+    };
+
+    await productFormComponent.save(mockEvent);
 
     const [event] = spyDispatchEvent.mock.calls;
+
+    // fetchMock
+    // .once(JSON.stringify({status: 'ok'}));
+
+    // await productFormComponent.save();
+
+    // const [event] = spyDispatchEvent.mock.calls;
 
     expect(event[0].type).toEqual('product-updated');
   });
