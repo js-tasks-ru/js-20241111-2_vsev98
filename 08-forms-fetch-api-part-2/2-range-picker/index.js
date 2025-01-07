@@ -45,8 +45,6 @@ export default class RangePicker {
             ${this.rightCalendar}
 
         `;
-    // ${this.createCalendarTemplate(new Date(new Date().setMonth(this.to.getMonth() - 1)))}
-    // ${this.createCalendarTemplate(this.from)}
   }
 
   createCalendarTemplate(dateShow) {
@@ -136,8 +134,6 @@ export default class RangePicker {
 
     this.removeHighLightCells();
     this.highlightCells();
-    // this.removeHighLightCells();
-    // this.highlightCells();
   };
 
   handleSelectorClick = (e) => {
@@ -162,7 +158,7 @@ export default class RangePicker {
 
       const date = new Date(newDateRightCalendar);
       date.setMonth(date.getMonth() + 1);
-      
+
       this.leftCalendar = this.rightCalendar;
       this.rightCalendar = this.createCalendarTemplate(date);
 
@@ -214,6 +210,22 @@ export default class RangePicker {
     this.dispatchEvent();
   }
 
+  dispatchEvent = () => {
+    const event = new CustomEvent("date-select", {
+      bubbles: true,
+      detail: {
+        from: this.from,
+        to: this.to,
+      },
+    });
+    this.element.dispatchEvent(event);
+  };
+
+  rangePickerToggle() {
+    const inputWrapper = this.subElements.input.parentElement;
+    inputWrapper.classList.toggle("rangepicker_open");
+  }
+
   highlightCells() {
     const cells = this.element.querySelectorAll(".rangepicker__cell");
 
@@ -236,22 +248,6 @@ export default class RangePicker {
         cell.classList.add("rangepicker__selected-between");
       }
     }
-  }
-
-  dispatchEvent = () => {
-    const event = new CustomEvent("date-select", {
-      bubbles: true,
-      detail: {
-        from: this.from,
-        to: this.to,
-      },
-    });
-    this.element.dispatchEvent(event);
-  };
-
-  rangePickerToggle() {
-    const inputWrapper = this.subElements.input.parentElement;
-    inputWrapper.classList.toggle("rangepicker_open");
   }
 
   removeHighLightCells() {
