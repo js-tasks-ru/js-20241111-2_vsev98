@@ -35,12 +35,17 @@ export default class RangePicker {
             `;
   }
 
+  createArrowsTemplate() {
+    return `
+          <div class="rangepicker__selector-arrow"></div>
+          <div class="rangepicker__selector-control-left"></div>
+          <div class="rangepicker__selector-control-right"></div>
+          `;
+  }
+
   createSelectorTemplate() {
     return `
-            <div class="rangepicker__selector-arrow"></div>
-            <div class="rangepicker__selector-control-left"></div>
-            <div class="rangepicker__selector-control-right"></div>
-
+            ${this.createArrowsTemplate()}
             ${this.leftCalendar}
             ${this.rightCalendar}
 
@@ -141,28 +146,11 @@ export default class RangePicker {
       this.subElements.selector.querySelectorAll(".rangepicker__calendar");
 
     if (e.target.classList.contains("rangepicker__selector-control-left")) {
-      const newDateLeftCalendar =
-        firstCalendar.querySelector("[data-value]").dataset.value;
-
-      const date = new Date(newDateLeftCalendar);
-      date.setMonth(date.getMonth() - 1);
-      this.rightCalendar = this.leftCalendar;
-      this.leftCalendar = this.createCalendarTemplate(date);
-
-      this.subElements.selector.innerHTML = this.createSelectorTemplate();
+      this.updateLeftCalendar(firstCalendar);
     }
 
     if (e.target.classList.contains("rangepicker__selector-control-right")) {
-      const newDateRightCalendar =
-        secondCalendar.querySelector("[data-value]").dataset.value;
-
-      const date = new Date(newDateRightCalendar);
-      date.setMonth(date.getMonth() + 1);
-
-      this.leftCalendar = this.rightCalendar;
-      this.rightCalendar = this.createCalendarTemplate(date);
-
-      this.subElements.selector.innerHTML = this.createSelectorTemplate();
+      this.updateRightCalendar(secondCalendar);
     }
 
     if (e.target.classList.contains("rangepicker__cell")) {
@@ -170,6 +158,47 @@ export default class RangePicker {
       this.updateRange(e.target.dataset.value);
     }
   };
+
+  updateLeftCalendar(firstCalendar) {
+    const newDateLeftCalendar =
+      firstCalendar.querySelector("[data-value]").dataset.value;
+
+    const date = new Date(newDateLeftCalendar);
+    date.setMonth(date.getMonth() - 1);
+    this.rightCalendar = this.leftCalendar;
+    this.leftCalendar = this.createCalendarTemplate(date);
+
+    this.updateCalendars();
+  }
+
+  updateRightCalendar(secondCalendar) {
+    const newDateRightCalendar =
+      secondCalendar.querySelector("[data-value]").dataset.value;
+
+    const date = new Date(newDateRightCalendar);
+    date.setMonth(date.getMonth() + 1);
+
+    this.leftCalendar = this.rightCalendar;
+    this.rightCalendar = this.createCalendarTemplate(date);
+
+    this.updateCalendars();
+  }
+
+  updateCalendars() {
+    const calendars = [
+      ...this.subElements.selector.querySelectorAll(".rangepicker__calendar"),
+    ];
+    calendars.forEach((calendar) => calendar.remove());
+
+    this.subElements.selector.insertAdjacentHTML(
+      "beforeend",
+      this.leftCalendar
+    );
+    this.subElements.selector.insertAdjacentHTML(
+      "beforeend",
+      this.rightCalendar
+    );
+  }
 
   createEventListener() {
     this.subElements.input.addEventListener("click", this.handleInputClick);
